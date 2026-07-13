@@ -1,0 +1,61 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+poetry.lock
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache/
+.coverage
+htmlcov/
+.ruff_cache/
+.mypy_cache/
+
+# Next.js / Node
+node_modules/
+.next/
+out/
+build/
+dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Databases & Analytics
+local_storage/
+duckdb_temp/
+*.db
+*.parquet
+*.csv
+*.xlsx
+*.json
+!package.json
+!tsconfig.json
+!postcss.config.js
+!tailwind.config.js
+!next.config.js
+!alembic.ini
+!requirements.txt
+
+# Environment variables & secrets
+.env
+.env.local
+.env.production
+.env.development
+.env.staging
+
+# IDEs & System
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp

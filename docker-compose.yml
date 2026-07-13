@@ -1,0 +1,120 @@
+version: '3.8'
+
+networks:
+  datasense_net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  minio_data:
+  redis_data:
+
+services:
+  db:
+    image: pgvector/pgvector:0.7.0-pg15
+    container_name: datasense_db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=securepass
+      - POSTGRES_DB=datasense
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - datasense_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d datasense"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7.0-alpine
+    container_name: datasense_redis
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - datasense_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio:RELEASE.2023-05-18T00-12-52Z
+    container_name: datasense_minio
+    command: server /data --console-address ":9001"
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadminpass
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    networks:
+      - datasense_net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/backend.Dockerfile
+    container_name: datasense_backend
+    environment:
+      - ENV=development
+      - DEBUG=true
+      - SECRET_KEY=e83a06708bf3f8e653aa02c2e0b57e930bf8d5ef664a7dae61c3bdbe4de1d102
+      - DATABASE_URL=postgresql+asyncpg://postgres:securepass@db:5432/datasense
+      - REDIS_URL=redis://redis:6379/0
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadminpass
+      - MINIO_SECURE=false
+      - MINIO_BUCKET_NAME=datasense-analytics
+      - GEMINI_API_KEY=mock-gemini-key
+    volumes:
+      - /opt/datasense/parquet:/var/data/parquet
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks:
+      - datasense_net
+
+  frontend:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/frontend.Dockerfile
+    container_name: datasense_frontend
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+    networks:
+      - datasense_net
+
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: datasense_nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./infrastructure/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - datasense_net
+    restart: always
