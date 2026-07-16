@@ -4,7 +4,7 @@ WORKDIR /app
 
 # Copy package profiles and install packages
 COPY frontend/package.json ./
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 # Copy source assets
 COPY frontend/src ./src
@@ -13,7 +13,6 @@ COPY frontend/postcss.config.js ./
 COPY frontend/tailwind.config.js ./
 COPY frontend/tsconfig.json ./
 COPY frontend/next.config.js ./
-COPY frontend/.env.local ./
 
 # Compile NextJS production distribution
 ENV NEXT_TELEMETRY_DISABLED=1

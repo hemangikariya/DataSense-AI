@@ -35,6 +35,11 @@ class Settings(BaseSettings):
     # AI API Keys
     GEMINI_API_KEY: str = Field(default="mock-gemini-key")
 
+    # Google OAuth
+    GOOGLE_CLIENT_ID: str = Field(default="mock-google-client-id")
+    GOOGLE_CLIENT_SECRET: str = Field(default="mock-google-client-secret")
+    GOOGLE_REDIRECT_URI: str = Field(default="http://localhost:8000/api/v1/auth/google/callback")
+
     # Observability
     SENTRY_DSN: Optional[str] = Field(default=None)
     OTEL_EXPORTER_OTLP_ENDPOINT: Optional[str] = Field(default=None)

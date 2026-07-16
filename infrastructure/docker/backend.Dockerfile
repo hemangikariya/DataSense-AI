@@ -17,7 +17,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/src /app/src
 COPY backend/alembic /app/alembic
 COPY backend/alembic.ini /app/alembic.ini
-COPY backend/.env /app/.env
 
 EXPOSE 8000
 
