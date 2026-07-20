@@ -10,6 +10,7 @@ from src.core.database import Base
 from src.modules.auth.models import User, RefreshToken, EmailVerificationToken, PasswordResetToken, Permission, Role, AuditLog
 from src.modules.datasets.models import Dataset, DatasetVersion, DatasetMetadata, DatasetTag
 from src.modules.profiling.models import DatasetProfile, ColumnProfile, QualityReport, Recommendation
+from src.modules.dashboards.models import Dashboard, DashboardWidget, DashboardLayout, DashboardShare, DashboardFavorite
 
 # Alembic Config object
 config = context.config
