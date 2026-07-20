@@ -11,6 +11,7 @@ from src.modules.auth.models import User, RefreshToken, EmailVerificationToken, 
 from src.modules.datasets.models import Dataset, DatasetVersion, DatasetMetadata, DatasetTag
 from src.modules.profiling.models import DatasetProfile, ColumnProfile, QualityReport, Recommendation
 from src.modules.dashboards.models import Dashboard, DashboardWidget, DashboardLayout, DashboardShare, DashboardFavorite
+from src.modules.ai.models import Conversation, Message, AIRequest, AIResponse, PromptTemplate
 
 # Alembic Config object
 config = context.config
