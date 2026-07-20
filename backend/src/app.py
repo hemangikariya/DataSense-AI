@@ -16,6 +16,7 @@ from src.core.exceptions import (
 from src.core.middleware import CorrelationAndLoggingMiddleware
 from src.modules.auth.api import router as auth_router
 from src.modules.organizations.api import router as org_router
+from src.modules.datasets.api import router as dataset_router
 
 
 @asynccontextmanager
@@ -65,6 +66,7 @@ app.add_exception_handler(Exception, global_exception_handler)
 # Include modules routes
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(org_router, prefix="/api/v1")
+app.include_router(dataset_router, prefix="/api/v1")
 
 
 @app.get("/health", status_code=status.HTTP_200_OK, tags=["Health Checks"])

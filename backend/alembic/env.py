@@ -7,7 +7,8 @@ from alembic import context
 # Import metadata and configuration settings
 from src.config import settings
 from src.core.database import Base
-from src.modules.auth.models import User, RefreshToken, EmailVerificationToken, PasswordResetToken
+from src.modules.auth.models import User, RefreshToken, EmailVerificationToken, PasswordResetToken, Permission, Role, AuditLog
+from src.modules.datasets.models import Dataset, DatasetVersion, DatasetMetadata, DatasetTag
 
 # Alembic Config object
 config = context.config

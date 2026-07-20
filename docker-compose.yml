@@ -1,4 +1,4 @@
-version: '3.8'
+##version: '3.8'
 
 networks:
   datasense_net:
@@ -24,7 +24,7 @@ services:
     networks:
       - datasense_net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d datasense"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d datasense" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -39,7 +39,7 @@ services:
     networks:
       - datasense_net
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -59,7 +59,7 @@ services:
     networks:
       - datasense_net
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
       interval: 5s
       timeout: 5s
       retries: 5

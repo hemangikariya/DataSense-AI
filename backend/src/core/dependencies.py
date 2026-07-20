@@ -1,6 +1,6 @@
-from typing import Dict, Any
+from typing import Dict, Any, List
 import uuid
-from fastapi import Depends, Header, HTTPException, status
+from fastapi import Depends, Header, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.core.database import get_db_session
 from src.core.cache import redis_manager
@@ -116,3 +116,75 @@ async def verify_workspace_access(
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden. Not a workspace member.")
 
     return workspace_id
+
+
+class PermissionRequired:
+    def __init__(self, required_permission: str):
+        self.required_permission = required_permission
+
+    async def __call__(
+        self,
+        request: Request,
+        user_context: Dict[str, Any] = Depends(get_authenticated_user_context),
+        db: AsyncSession = Depends(get_db)
+    ) -> bool:
+        """
+        Validates request permissions matching Org and Workspace roles lists.
+        """
+        user_id = uuid.UUID(user_context.get("sub"))
+        org_role = user_context.get("org_role")
+        
+        # 1. Super Admin override
+        if org_role == "SUPER_ADMIN":
+            return True
+            
+        # 2. Extract active Workspace role context
+        workspace_id_str = request.headers.get("X-Workspace-ID")
+        workspace_role = None
+        if workspace_id_str:
+            try:
+                ws_id = uuid.UUID(workspace_id_str)
+                from src.modules.organizations.models import WorkspaceMember
+                from sqlalchemy import select
+                member_query = select(WorkspaceMember).where(
+                    WorkspaceMember.workspace_id == ws_id,
+                    WorkspaceMember.user_id == user_id
+                )
+                member_result = await db.execute(member_query)
+                member = member_result.scalar_one_or_none()
+                if member:
+                    workspace_role = member.workspace_role
+            except Exception:
+                pass
+
+        # 3. Accumulate active roles
+        roles_to_check = []
+        if org_role:
+            roles_to_check.append(org_role)
+        if workspace_role:
+            roles_to_check.append(workspace_role)
+
+        # 4. Check loaded role permissions mappings
+        from src.modules.auth.models import Role
+        from sqlalchemy import select
+        from sqlalchemy.orm import selectinload
+        
+        query = select(Role).where(Role.name.in_(roles_to_check)).options(selectinload(Role.permissions))
+        result = await db.execute(query)
+        roles = result.scalars().all()
+        
+        for r in roles:
+            for p in r.permissions:
+                if p.name == self.required_permission:
+                    return True
+
+        logger.error(
+            "Access denied: permission check failed",
+            user_id=str(user_id),
+            permission=self.required_permission,
+            active_roles=roles_to_check
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Forbidden. Missing required permission: {self.required_permission}"
+        )
