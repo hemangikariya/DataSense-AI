@@ -20,6 +20,7 @@ from src.modules.datasets.api import router as dataset_router
 from src.modules.profiling.api import router as profiling_router
 from src.modules.dashboards.api import router as dashboard_router
 from src.modules.ai.api import router as ai_router
+from src.modules.analytics.api import router as analytics_router
 
 
 @asynccontextmanager
@@ -73,6 +74,7 @@ app.include_router(dataset_router, prefix="/api/v1")
 app.include_router(profiling_router, prefix="/api/v1")
 app.include_router(dashboard_router, prefix="/api/v1")
 app.include_router(ai_router, prefix="/api/v1")
+app.include_router(analytics_router, prefix="/api/v1")
 
 
 @app.get("/health", status_code=status.HTTP_200_OK, tags=["Health Checks"])
