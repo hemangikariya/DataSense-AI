@@ -58,10 +58,23 @@ export const useAuth = () => {
   return context
 }
 
+import { ThemeProvider } from "@/providers/theme-provider"
+import { NotificationProvider } from "@/providers/notification-provider"
+import { ModalProvider } from "@/providers/modal-provider"
+import { SidebarProvider } from "@/providers/sidebar-provider"
+
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>{children}</AuthProvider>
+      <ThemeProvider>
+        <NotificationProvider>
+          <ModalProvider>
+            <SidebarProvider>
+              <AuthProvider>{children}</AuthProvider>
+            </SidebarProvider>
+          </ModalProvider>
+        </NotificationProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   )
 }

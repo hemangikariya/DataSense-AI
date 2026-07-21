@@ -41,11 +41,11 @@ export default function NewReportPage() {
     ])
   }
 
-  const deleteSection = (idx: int) => {
+  const deleteSection = (idx: number) => {
     setSections(prev => prev.filter((_, i) => i !== idx))
   }
 
-  const handleSectionChange = (idx: int, field: string, value: string) => {
+  const handleSectionChange = (idx: number, field: string, value: string) => {
     setSections(prev => {
       const copy = [...prev]
       copy[idx] = { ...copy[idx], [field]: value }
