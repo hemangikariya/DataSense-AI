@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -9,10 +9,7 @@ import * as zod from "zod"
 import { ShieldAlert, CheckCircle2 } from "lucide-react"
 import { authApi } from "@/lib/auth-api"
 
-const signupSchema = zod.object({
-  email: zod.string().email("Please enter a valid email address."),
-  first_name: zod.string().min(1, "First name is required."),
-  last_name: zod.string().min(1, "Last name is required."),
+const schema = zod.object({
   password: zod.string().min(8, "Password must be at least 8 characters long.")
     .refine((val) => /[A-Z]/.test(val), "Password must include at least one uppercase letter.")
     .refine((val) => /[0-9]/.test(val), "Password must include at least one number."),
@@ -22,10 +19,13 @@ const signupSchema = zod.object({
   path: ["confirmPassword"]
 })
 
-type SignupFormValues = zod.infer<typeof signupSchema>
+type FormValues = zod.infer<typeof schema>
 
-export default function SignupPage() {
+export default function ResetPasswordPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const token = searchParams?.get("token")
+
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
@@ -34,28 +34,31 @@ export default function SignupPage() {
     register,
     handleSubmit,
     formState: { errors }
-  } = useForm<SignupFormValues>({
-    resolver: zodResolver(signupSchema)
+  } = useForm<FormValues>({
+    resolver: zodResolver(schema)
   })
 
-  const onSubmit = async (data: SignupFormValues) => {
+  const onSubmit = async (data: FormValues) => {
+    if (!token) {
+      setErrorMsg("Password reset token is missing or invalid.")
+      return
+    }
+
     setLoading(true)
     setErrorMsg(null)
     setSuccessMsg(null)
 
     try {
-      await authApi.signup({
-        email: data.email,
-        password: data.password,
-        first_name: data.first_name,
-        last_name: data.last_name
+      await authApi.resetPassword({
+        token,
+        new_password: data.password
       })
-      setSuccessMsg("Account created successfully! Verification email simulated.")
+      setSuccessMsg("Password changed successfully! Routing to sign in...")
       setTimeout(() => {
         router.push("/login")
       }, 1500)
     } catch (err: any) {
-      setErrorMsg(err.response?.data?.detail || "Registration failed. Email may already exist.")
+      setErrorMsg(err.response?.data?.detail || "Failed to reset password. Link may be expired.")
     } finally {
       setLoading(false)
     }
@@ -64,9 +67,15 @@ export default function SignupPage() {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h1 className="text-2xl font-bold tracking-tight text-blue-500">Register</h1>
-        <p className="text-slate-400 text-xs mt-1">Create your DataSense AI analysis account</p>
+        <h1 className="text-2xl font-bold tracking-tight text-blue-500">Reset Password</h1>
+        <p className="text-slate-400 text-xs mt-1">Specify your new credentials key</p>
       </div>
+
+      {!token && (
+        <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-500 text-xs rounded">
+          Warning: Missing reset token in URL parameters.
+        </div>
+      )}
 
       {errorMsg && (
         <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-500 text-xs rounded flex items-center gap-2">
@@ -83,52 +92,14 @@ export default function SignupPage() {
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-[10px] text-slate-400 font-semibold mb-1 uppercase">First Name</label>
-            <input
-              type="text"
-              {...register("first_name")}
-              className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded text-xs text-slate-100 focus:outline-none focus:border-blue-600"
-              placeholder="John"
-              disabled={loading}
-            />
-            {errors.first_name && <p className="text-[10px] text-red-500 mt-1">{errors.first_name.message}</p>}
-          </div>
-
-          <div>
-            <label className="block text-[10px] text-slate-400 font-semibold mb-1 uppercase">Last Name</label>
-            <input
-              type="text"
-              {...register("last_name")}
-              className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded text-xs text-slate-100 focus:outline-none focus:border-blue-600"
-              placeholder="Doe"
-              disabled={loading}
-            />
-            {errors.last_name && <p className="text-[10px] text-red-500 mt-1">{errors.last_name.message}</p>}
-          </div>
-        </div>
-
         <div>
-          <label className="block text-[10px] text-slate-400 font-semibold mb-1 uppercase">Email Address</label>
-          <input
-            type="email"
-            {...register("email")}
-            className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded text-xs text-slate-100 focus:outline-none focus:border-blue-600"
-            placeholder="name@company.com"
-            disabled={loading}
-          />
-          {errors.email && <p className="text-[10px] text-red-500 mt-1">{errors.email.message}</p>}
-        </div>
-
-        <div>
-          <label className="block text-[10px] text-slate-400 font-semibold mb-1 uppercase">Password</label>
+          <label className="block text-[10px] text-slate-400 font-semibold mb-1 uppercase">New Password</label>
           <input
             type="password"
             {...register("password")}
             className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded text-xs text-slate-100 focus:outline-none focus:border-blue-600"
             placeholder="••••••••"
-            disabled={loading}
+            disabled={loading || !token}
           />
           {errors.password && <p className="text-[10px] text-red-500 mt-1">{errors.password.message}</p>}
         </div>
@@ -140,22 +111,22 @@ export default function SignupPage() {
             {...register("confirmPassword")}
             className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded text-xs text-slate-100 focus:outline-none focus:border-blue-600"
             placeholder="••••••••"
-            disabled={loading}
+            disabled={loading || !token}
           />
           {errors.confirmPassword && <p className="text-[10px] text-red-500 mt-1">{errors.confirmPassword.message}</p>}
         </div>
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || !token}
           className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-800 text-white rounded text-xs font-semibold transition"
         >
-          {loading ? "Registering..." : "Create Account"}
+          {loading ? "Saving Credentials..." : "Reset Password"}
         </button>
       </form>
 
       <div className="text-center text-xs text-slate-500">
-        Already have an account?{" "}
+        Return to{" "}
         <Link href="/login" className="text-blue-500 hover:underline">
           Sign In
         </Link>

@@ -7,7 +7,8 @@ from sqlalchemy import select, update
 from src.core.celery import celery_app
 from src.core.database import AsyncSessionLocal
 from src.core.logging import logger
-from src.core.storage import minio_client
+from src.config import settings
+from src.core.storage import storage_manager
 from src.modules.analytics.models import Report, ReportHistory, PredictionJob, PredictionResult
 from src.modules.datasets.models import Dataset
 
@@ -97,9 +98,10 @@ def generate_pdf_report_task(history_id_str: str, report_id_str: str) -> str:
             # Upload to MinIO bucket
             s3_key = f"reports/pdf/{report_id}_{int(time.time())}.pdf"
             try:
-                minio_client.upload_file(
-                    local_pdf_path,
-                    s3_key
+                storage_manager.client.fput_object(
+                    settings.MINIO_BUCKET_NAME,
+                    s3_key,
+                    local_pdf_path
                 )
             except Exception as e:
                 logger.error("MinIO report upload failed", error=str(e))
@@ -168,7 +170,11 @@ def generate_excel_report_task(history_id_str: str, dataset_id_str: str) -> str:
 
             s3_key = f"reports/xlsx/{dataset_id}_{int(time.time())}.xlsx"
             try:
-                minio_client.upload_file(local_excel_path, s3_key)
+                storage_manager.client.fput_object(
+                    settings.MINIO_BUCKET_NAME,
+                    s3_key,
+                    local_excel_path
+                )
             except Exception as e:
                 logger.error("MinIO xlsx upload failed", error=str(e))
 

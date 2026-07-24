@@ -8,7 +8,7 @@ import { Bell, Search, Menu, Building2, User, HelpCircle, LogOut } from "lucide-
 
 export default function Navbar() {
   const { toggleMobileSidebar } = useSidebar()
-  const { user, logout } = useAuth()
+  const { user, activeOrgId, activeWorkspaceId, workspaces, switchWorkspace, logout } = useAuth()
   const { theme, setTheme } = useTheme()
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false)
   const [searchVal, setSearchVal] = useState("")
@@ -23,15 +23,26 @@ export default function Navbar() {
 
         <div className="flex items-center gap-3">
           {/* Organization indicator */}
-          <div className="flex items-center gap-2 bg-slate-950 px-3 py-1.5 border border-slate-800 rounded text-xs">
+          <div className="flex items-center gap-2 bg-slate-950 px-3 py-1.5 border border-slate-800 rounded text-xs select-none">
             <Building2 className="w-3.5 h-3.5 text-blue-500" />
-            <span className="font-semibold">Acme Corp</span>
+            <span className="font-semibold text-slate-200">Active Org</span>
           </div>
 
-          {/* Workspace select toggler */}
-          <div className="flex items-center gap-1.5 bg-slate-950 px-3 py-1.5 border border-slate-800 rounded text-xs">
+          {/* Workspace select switcher */}
+          <div className="flex items-center gap-1.5 bg-slate-950 px-3 py-1 border border-slate-800 rounded text-xs">
             <span className="font-semibold text-slate-400">WS:</span>
-            <span className="font-semibold">Production BI</span>
+            <select
+              value={activeWorkspaceId || ""}
+              onChange={(e) => switchWorkspace(e.target.value)}
+              className="bg-transparent border-none text-slate-100 font-semibold text-xs focus:ring-0 focus:outline-none cursor-pointer py-0.5"
+              aria-label="Switch Workspace"
+            >
+              {workspaces.map((ws) => (
+                <option key={ws.id} value={ws.id} className="bg-slate-900 text-slate-200">
+                  {ws.name}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
       </div>

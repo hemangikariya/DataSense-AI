@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.modules.datasets.models import Dataset
 from src.modules.profiling.models import DatasetProfile, ColumnProfile, QualityReport, Recommendation
 from src.modules.profiling.services import ProfilingService
-from src.modules.profiling.tasks import async_process_dataset as async_profile_dataset_task
+from src.modules.profiling.tasks import async_profile_dataset as async_profile_dataset_task
 
 
 @pytest.fixture
